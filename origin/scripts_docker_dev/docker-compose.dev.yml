@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  # client:
+  #   build:
+  #     context: ../client
+  #     dockerfile: Dockerfile.dev
+      
+  #   ports:
+  #     - "4000:4000"
+  #   container_name: client
+
+  #   volumes:       
+  #     - type: bind
+  #       source: ../
+  #       target: /app
+  #     - /app/target
+  #     # - ../client/src:/app/src
+  #     - yew-ui-cargo-registry-cache:/usr/local/cargo/registry
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile.dev
+      
+    ports:
+      - "8080:8080"
+    container_name: api
+    volumes:
+      # - type: bind
+      #   source: ../
+      #   target: /app
+      - "../api/target:/app/target"
+      # - /app/target
+      - ../api/src:/app/src
+      # - yew-ui-cargo-registry-cache:/usr/local/cargo/registry
+    environment:
+      - RUST_ENV=RUST_RARA
+
+#   db:
+#     build:
+#       context: ../db
+#       dockerfile: Dockerfile.dev
+#     container_name: db
+#     # volumes:
+#     # - type: bind
+#     #   source: ../
+#     #   target: /app
+
+#   gateway:
+#     build:
+#       context: ../gateway
+#       dockerfile: Dockerfile.dev
+#     depends_on:
+#       # - client
+#       # - api
+#       - db
+#     ports:
+#       - "80:80"
+    
+#     container_name: gateway
+
+# volumes:
+#   actix-web-cargo-registry-cache:
+#   yew-ui-cargo-registry-cache:   
+    

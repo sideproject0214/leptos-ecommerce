@@ -1,0 +1,25 @@
+# https://hub.docker.com/r/rustlang/rust/tags
+# nightly 버전은 일반 rust docker hub가 아닌 rustlnag/rust-nightly를 사용한다.
+FROM rust:latest
+# FROM rustlang/rust:nightly-bullseye
+
+# RUN mkdir -p /app
+WORKDIR /app
+
+# nightly 버전을 처음부터 설정
+RUN rustup default nightly 
+
+RUN wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
+RUN tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
+RUN cp cargo-binstall /usr/local/cargo/bin
+
+# Install cargo-leptos
+RUN cargo binstall cargo-leptos -y
+
+# Add the WASM target
+RUN rustup target add wasm32-unknown-unknown
+
+COPY ./ ./
+
+# start app
+ENTRYPOINT ["/bin/sh","./docker-entrypoint-dev.sh"]

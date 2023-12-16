@@ -1,0 +1,29 @@
+init:
+    cd ./api && cargo watch -x run &
+    cd ./client && cargo leptos watch &
+    cd ./db && docker build -t db:v1 -f Dockerfile.dev . && docker run -p 5432:5432 --name db db:v1 &
+
+dev:
+    cd ./api && cargo watch -x run &
+    cd ./client && cargo leptos watch &
+    cd ./db && docker run -p 5432:5432 --name db db:v1 &
+
+d:
+    cd ./api && cargo watch -x run &
+    cd ./client && cargo leptos watch &
+ 
+
+q:
+    pkill -f "cargo" &
+    pkill -f "leptos" &
+
+qq:
+    docker stop $(docker ps -aq) &
+    pkill -f "cargo" &
+    pkill -f "leptos" &
+      
+docker:
+    cd ./db && docker build -t db:v1 -f Dockerfile.dev . && docker run -p 5432:5432 db:v1
+docker2:
+    cd ./api && docker build -t api:v1 -f Dockerfile.dev . && docker run -p 8080:8080 api:v1
+    
