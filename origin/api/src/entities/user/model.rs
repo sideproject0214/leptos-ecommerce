@@ -3,7 +3,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(FromRow, Clone, Debug)]
-pub struct UserQueryResult {
+pub struct UserData {
   pub id: i64,
   pub uuid: Uuid,
   pub name: String,
