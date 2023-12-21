@@ -44,6 +44,7 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
   // fs::read_dir 함수는 지정된 디렉토리의 내용을 읽어들입니다. 이 함수는 디렉토리 내의
   // 엔트리(파일, 디렉토리, 심볼릭 링크 등) 목록을 담고 있는 반복자(iterator)를
   // 반환합니다.
+
   if let Ok(entries) = fs::read_dir(&seeder_folder) {
     for entry in entries {
       if let Ok(entry) = entry {
