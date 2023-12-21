@@ -87,7 +87,7 @@ impl EnvConfig for EnvValue {
         self.env_path = env::current_dir()
           .and_then(|a| Ok(a.join("src/config/.env.dev")))
           .unwrap();
-        println!("current folder : {:?}", &self.env_path)
+        // println!("current folder : {:?}", &self.env_path)
       }
       _ => {
         self.env_path = env::current_dir()

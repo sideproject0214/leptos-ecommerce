@@ -1,5 +1,6 @@
 use api::config::{EnvConfig, EnvValue};
 use api::entities::index::{get_db_conn, DbRepo};
+use api::seeders::sqlx_seeder::seeder;
 use axum::routing::get;
 use axum::Router;
 
@@ -9,13 +10,15 @@ async fn main() {
   my_env_value.load_config();
 
   let _db_repo = DbRepo::init(&my_env_value).await;
-  println!(
-    "env_path: {:?}\n  \n api_address: {:?}",
-    &my_env_value.env_path, &my_env_value.api_address
-  );
+  // println!(
+  //   "env_path: {:?}\n  \n api_address: {:?}",
+  //   &my_env_value.env_path, &my_env_value.api_address
+  // );
 
   tracing_subscriber::fmt::init();
-  let _pool = get_db_conn(&my_env_value);
+  let pool = get_db_conn(&my_env_value).await;
+  let _seeder = seeder(&pool).await;
+  println!("pool : {:?}", pool);
 
   let app = Router::new().route("/api", get(root));
 

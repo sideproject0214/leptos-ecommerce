@@ -62,7 +62,7 @@ pub trait DbPoolGetter {
 /// DbRepo 라는 구조체 메서드
 impl DbRepo {
   pub async fn init(my_env: &EnvValue) -> Self {
-    println!("DbRepo Init!!! {:?}", my_env);
+    // println!("DbRepo Init!!! {:?}", my_env);
     Self {
       my_pool: get_db_conn(&my_env).await,
     }
