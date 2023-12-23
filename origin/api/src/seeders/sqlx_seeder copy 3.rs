@@ -1,12 +1,16 @@
+use std::collections::{HashMap, HashSet};
 use std::env::current_dir;
 use std::fs::{self};
 use std::io::Read;
 use std::path::PathBuf;
 
 use serde_json::{self, Map, Value};
+use sqlx::database::HasArguments;
+use sqlx::types::Json;
 use sqlx::{Pool, Postgres};
 
-use crate::entities::user::model::UserCreateInsert;
+use crate::entities::post::model::PostData;
+use crate::entities::user::model::UserData;
 
 pub struct Seeder {
   file_names: Vec<String>,
@@ -42,6 +46,7 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
   // fs::read_dir 함수는 지정된 디렉토리의 내용을 읽어들입니다. 이 함수는 디렉토리 내의
   // 엔트리(파일, 디렉토리, 심볼릭 링크 등) 목록을 담고 있는 반복자(iterator)를
   // 반환합니다.
+
   if let Ok(entries) = fs::read_dir(&seeder_folder) {
     for entry in entries {
       if let Ok(entry) = entry {
@@ -73,64 +78,51 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
 
                     // 여기서 [{},{},{}] 구조로 만들어진 것을 하나씩 다시 돌린다
                     for each in arr_field_value {
-                      let mut field_names: Vec<&str> = Vec::new();
-                      let mut field_values: Vec<String> = Vec::new();
-                      let mut field_user_values: Vec<UserCreateInsert> = Vec::new();
-                      // println!("each json_data {:?}", each);
+                      let mut field_names: HashSet<String> = HashSet::new();
 
-                      // {} 형태로 만들어짐
+                      // json 필드 이름 추출
+                      extract_field_names(each, &mut field_names);
 
-                      if let Some(json_obj) = each.as_object() {
-                        for (key, value) in json_obj {
-                          field_names.push(key);
+                      // .collect::<Vec<_>>()에서 collect() 함수는 반복자를 콜렉션으로
+                      // 변환하는 메서드입니다. 여기서는 Vec<_>으로 명시된 벡터로 변환하고
+                      // 있습니다.
 
-                          field_values.push(value.to_string());
-                        }
-                      }
-                      println!("Field Names: {:?}", &field_names);
-                      println!("Field Values: {:?}", &field_values);
-                      let placeholders = (1..=field_values.len())
-                        .map(|n| format!("${}", n))
-                        .collect::<Vec<String>>()
+                      // ::<Vec<_>> 부분은 Rust의 제네릭 타입
+                      // 매개변수를 명시하는 부분입니다. _는 컴파일러에게 해당 부분의
+                      // 타입을 추론하도록 하는 플레이스홀더입니다. 따라서
+                      // collect::<Vec<_>>()는 반환될 벡터의 타입을 추론하게 합니다.
+
+                      // 그리고 .join(", ")은 벡터의 요소들을 문자열로 결합하는
+                      // 메서드입니다. 여기서 ", "는 각 요소를 구분하는 구분자입니다.
+
+                      // collect::<Vec<_>>()는 벡터로 값을 수집하고, join(", ")은 벡터의
+                      // 요소들을 쉼표와 공백으로 구분하여 하나의 문자열로 연결합니다.
+                      let columns: String =
+                        field_names.into_iter().collect::<Vec<_>>().join(", ");
+                      let values: String = field_names
+                        .iter()
+                        .map(|field| format!(":${}", field))
+                        .collect::<Vec<_>>()
                         .join(", ");
 
-                      let mut query = format!(
+                      let query = format!(
                         "insert into {} ({}) values ({})",
-                        &first_part,
-                        &field_names.join(", "),
-                        placeholders
+                        first_part, columns, values
                       );
-                      println!("postgres query : {:?}", &query);
 
-                      // 쿼리 실행
+                      // 필드 값 추출 및 쿼리 실행
+                      let mut tx = pool.begin().await.unwrap();
+
                       let mut query = sqlx::query(&query);
 
-                      // 개별적으로 값들을 바인딩
-
-                      // for (index, value) in field_values.iter().enumerate() {
-                      //   println!(
-                      //     "field_names[index] : {:?}",
-                      //     each.get(field_names[index])
-                      //   );
-                      //   if let Some(each_value) = each.get(field_names[index]) {
-                      //     query = query.bind(each_value)
-                      //     // println!("each_value", &each_value);
-                      //   }
-                      // }
-
-                      for (index, value) in field_values.iter().enumerate() {
-                        if let Some(json_value) = each.get(field_names[index]) {
-                          if let Some(bool_value) = json_value.as_bool() {
-                            query = query.bind(bool_value)
-                          } else {
-                            query = query.bind(value)
-                          }
-                        } else {
-                          query = query.bind(value)
+                      for field_name in field_names {
+                        if let Some(field_name) = each.get(&field_names) {
+                          query = query.bind(Json(field_name.clone()));
                         }
                       }
-                      // 쿼리 실행
-                      query.execute(pool).await.unwrap();
+
+                      query.execute(&mut tx).await.unwrap();
+                      tx.commit().await.unwrap();
                     }
                   }
                 }
@@ -149,14 +141,6 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
     new_seeder.file_names, new_seeder.table_names
   );
 
-  // serde_json::from_str()은 JSON 문자열을 파싱하여 해당하는 타입으로 디코딩하는
-  // 함수입니다. 그러나 여기서 file_name은 파일 이름을 나타내는 문자열이고, 이를 JSON
-  // 문자열로 파싱할 수 없습니다. 파일 내용을 읽어와 JSON으로 디코딩해야 합니다.
-  // for file_name in new_seeder.file_names {
-  //   let _ = read_json_file(&file_name);
-  // }
-
-  // for
   seeder_folder
 }
 
@@ -202,11 +186,12 @@ pub fn read_json_file() -> Vec<Value> {
   json_values
 }
 
-fn extract_field_names(json: &Value, field_names: &mut Vec<String>) {
+fn extract_field_names(json: &Value, field_names: &mut HashSet<String>) {
   match json {
     Value::Object(map) => {
       for (key, value) in map {
-        field_names.push(key.to_owned()); // 필드 이름을 벡터에 추가
+        field_names.insert(key.to_owned()); // 필드 이름을 벡터에 추가, Vec의 경우는 push 이나 HashSet은 insert 를 사용해야
+                                            // 한다
         extract_field_names(value, field_names); // 중첩된 값이 있을 경우 재귀적으로 호출
       }
     }

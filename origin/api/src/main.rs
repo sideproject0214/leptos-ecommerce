@@ -1,5 +1,7 @@
 use api::config::{EnvConfig, EnvValue};
 use api::entities::index::{get_db_conn, DbRepo};
+use api::entities::user::model::UserCreateInsert;
+use api::entities::user::repo::user_create;
 use api::seeders::sqlx_seeder::seeder;
 use axum::routing::get;
 use axum::Router;
@@ -18,7 +20,16 @@ async fn main() {
   tracing_subscriber::fmt::init();
   let pool = get_db_conn(&my_env_value).await;
   let _seeder = seeder(&pool).await;
-  println!("pool : {:?}", pool);
+
+  // let user = UserCreateInsert {
+  //   name: "iu".to_string(),
+  //   email: "iu@ssaple.com".to_string(),
+  //   password: "123".to_string(),
+  // };
+
+  // user_create(&user, &pool).await.unwrap();
+
+  // println!("pool : {:?}", pool);
 
   let app = Router::new().route("/api", get(root));
 

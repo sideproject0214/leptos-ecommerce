@@ -1,12 +1,16 @@
+use std::collections::HashSet;
 use std::env::current_dir;
 use std::fs::{self};
 use std::io::Read;
 use std::path::PathBuf;
 
+use axum::Json;
 use serde_json::{self, Map, Value};
-use sqlx::{Pool, Postgres};
+use sqlx::query::Query;
+use sqlx::{Arguments, Pool, Postgres};
 
-use crate::entities::user::model::UserCreateInsert;
+use crate::entities::user::model::{json_data_to_user_data, UserSeedData};
+use crate::seeders::task::users::user_seed_data::load_user_data;
 
 pub struct Seeder {
   file_names: Vec<String>,
@@ -26,7 +30,7 @@ impl SeederFn for Seeder {
   }
 }
 
-pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
+pub async fn seeder(pool: &Pool<Postgres>) {
   let mut new_seeder = Seeder::new();
   // current_dir()은 현재 작업하고 있는 곳의 폴더를 알려준다
   // api 폴더에서 src/main.rs를 실행하면 api 폴더가 프로그램이 실행되는 기준 디렉토리가
@@ -59,80 +63,48 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
                 new_seeder.table_names.push(first_part.to_string());
                 // println!("table_names aaa: {:?}", first_part);
 
-                let json_data = read_json_file();
+                // let json_data = read_json_file();
 
                 match first_part {
                   "users" => println!("users model"),
                   "posts" => println!("posts model"),
                   _ => println!("others model"),
                 }
-                for json_value in json_data {
-                  if let Some(field_value) = json_value.get(first_part) {
-                    // 여기서 [{},{},{}] 구조로 만들어짐
-                    let arr_field_value = field_value.as_array().unwrap();
 
-                    // 여기서 [{},{},{}] 구조로 만들어진 것을 하나씩 다시 돌린다
-                    for each in arr_field_value {
-                      let mut field_names: Vec<&str> = Vec::new();
-                      let mut field_values: Vec<String> = Vec::new();
-                      let mut field_user_values: Vec<UserCreateInsert> = Vec::new();
-                      // println!("each json_data {:?}", each);
+                let user_data = load_user_data();
+                println!("user_data {:?}", user_data);
 
-                      // {} 형태로 만들어짐
-
-                      if let Some(json_obj) = each.as_object() {
-                        for (key, value) in json_obj {
-                          field_names.push(key);
-
-                          field_values.push(value.to_string());
-                        }
-                      }
-                      println!("Field Names: {:?}", &field_names);
-                      println!("Field Values: {:?}", &field_values);
-                      let placeholders = (1..=field_values.len())
-                        .map(|n| format!("${}", n))
-                        .collect::<Vec<String>>()
-                        .join(", ");
-
-                      let mut query = format!(
-                        "insert into {} ({}) values ({})",
-                        &first_part,
-                        &field_names.join(", "),
-                        placeholders
-                      );
-                      println!("postgres query : {:?}", &query);
-
-                      // 쿼리 실행
-                      let mut query = sqlx::query(&query);
-
-                      // 개별적으로 값들을 바인딩
-
-                      // for (index, value) in field_values.iter().enumerate() {
-                      //   println!(
-                      //     "field_names[index] : {:?}",
-                      //     each.get(field_names[index])
-                      //   );
-                      //   if let Some(each_value) = each.get(field_names[index]) {
-                      //     query = query.bind(each_value)
-                      //     // println!("each_value", &each_value);
-                      //   }
-                      // }
-
-                      for (index, value) in field_values.iter().enumerate() {
-                        if let Some(json_value) = each.get(field_names[index]) {
-                          if let Some(bool_value) = json_value.as_bool() {
-                            query = query.bind(bool_value)
-                          } else {
-                            query = query.bind(value)
-                          }
-                        } else {
-                          query = query.bind(value)
-                        }
-                      }
-                      // 쿼리 실행
-                      query.execute(pool).await.unwrap();
-                    }
-                  }
+                for user in user_data {
+                  let user = UserSeedData {
+                    uuid: user.uuid,
+                    name: user.name,
+                    email: user.email,
+                    password: user.password,
+                    google_id: user.google_id,
+                    naver_id: user.naver_id,
+                    kakao_id: user.kakao_id,
+                    is_admin: user.is_admin,
+                    created_at: user.created_at,
+                    updated_at: user.updated_at,
+                  };
+                  // sqlx::query(
+                  //   "INSERT INTO users (uuid, name, email, password, google_id, \
+                  //    naver_id, kakao_id, is_admin, created_at, updated_at) VALUES ($1,
+                  // \    $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+                  // )
+                  // .bind(&user.uuid)
+                  // .bind(&user.name)
+                  // .bind(&user.email)
+                  // .bind(&user.password)
+                  // .bind(&user.google_id)
+                  // .bind(&user.naver_id)
+                  // .bind(&user.kakao_id)
+                  // .bind(&user.is_admin)
+                  // .bind(&user.created_at)
+                  // .bind(&user.updated_at)
+                  // .execute(pool)
+                  // .await
+                  // .unwrap();
                 }
               }
             }
@@ -143,21 +115,6 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
       }
     }
   }
-
-  println!(
-    "file_name: {:?} parts : {:?}",
-    new_seeder.file_names, new_seeder.table_names
-  );
-
-  // serde_json::from_str()은 JSON 문자열을 파싱하여 해당하는 타입으로 디코딩하는
-  // 함수입니다. 그러나 여기서 file_name은 파일 이름을 나타내는 문자열이고, 이를 JSON
-  // 문자열로 파싱할 수 없습니다. 파일 내용을 읽어와 JSON으로 디코딩해야 합니다.
-  // for file_name in new_seeder.file_names {
-  //   let _ = read_json_file(&file_name);
-  // }
-
-  // for
-  seeder_folder
 }
 
 pub fn read_json_file() -> Vec<Value> {
@@ -218,3 +175,38 @@ fn extract_field_names(json: &Value, field_names: &mut Vec<String>) {
     _ => {}
   }
 }
+
+// fn extract_field_values(json: &Value, field_values: &mut Vec<String>) {
+//   match json {
+//     Value::Object(map) => {
+//       for (key, value) in map {
+//         field_values.push(value.to_owned()); // 필드 이름을 벡터에 추가
+//         extract_field_values(value, field_values); // 중첩된 값이 있을 경우 재귀적으로
+//                                                    // 호출
+//       }
+//     }
+//     Value::Array(arr) => {
+//       for value in arr {
+//         extract_field_values(value, field_values);
+//       }
+//     }
+//     _ => {}
+//   }
+// }
+// fn extract_field_values(json: &Value, field_values: &mut Vec<String>) {
+//   match json {
+//     Value::Object(map) => {
+//       for (key, value) in map {
+//         field_values.push(value.to_owned()); // 필드 이름을 벡터에 추가
+//         extract_field_values(value, field_values); // 중첩된 값이 있을 경우 재귀적으로
+//                                                    // 호출
+//       }
+//     }
+//     Value::Array(arr) => {
+//       for value in arr {
+//         extract_field_values(value, field_values);
+//       }
+//     }
+//     _ => {}
+//   }
+// }

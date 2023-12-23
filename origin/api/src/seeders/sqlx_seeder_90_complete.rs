@@ -6,8 +6,6 @@ use std::path::PathBuf;
 use serde_json::{self, Map, Value};
 use sqlx::{Pool, Postgres};
 
-use crate::entities::user::model::UserCreateInsert;
-
 pub struct Seeder {
   file_names: Vec<String>,
   table_names: Vec<String>,
@@ -75,7 +73,6 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
                     for each in arr_field_value {
                       let mut field_names: Vec<&str> = Vec::new();
                       let mut field_values: Vec<String> = Vec::new();
-                      let mut field_user_values: Vec<UserCreateInsert> = Vec::new();
                       // println!("each json_data {:?}", each);
 
                       // {} 형태로 만들어짐
@@ -107,30 +104,19 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
 
                       // 개별적으로 값들을 바인딩
 
-                      // for (index, value) in field_values.iter().enumerate() {
-                      //   println!(
-                      //     "field_names[index] : {:?}",
-                      //     each.get(field_names[index])
-                      //   );
-                      //   if let Some(each_value) = each.get(field_names[index]) {
-                      //     query = query.bind(each_value)
-                      //     // println!("each_value", &each_value);
-                      //   }
-                      // }
-
-                      for (index, value) in field_values.iter().enumerate() {
-                        if let Some(json_value) = each.get(field_names[index]) {
-                          if let Some(bool_value) = json_value.as_bool() {
-                            query = query.bind(bool_value)
-                          } else {
-                            query = query.bind(value)
-                          }
-                        } else {
-                          query = query.bind(value)
-                        }
+                      for value in field_values {
+                        query = query.bind(value)
                       }
+
                       // 쿼리 실행
                       query.execute(pool).await.unwrap();
+
+                      // Deserialize하는 과정에서 JSON 데이터의 키와 값을 해당 Rust
+                      // 구조체의 필드와 매핑시켜 구조체로 변환하는 작업을 말해. 이를 통해
+                      // Rust 코드에서 쉽게 JSON 데이터를 조작하고 활용할 수 있게 돼.
+
+                      // query_as는 주로 select 일때 사용하고, query는 주로 insert 구문
+                      // 실행할 때 사용한다.
                     }
                   }
                 }

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use serde_json::{self, Map, Value};
 use sqlx::{Pool, Postgres};
 
-use crate::entities::user::model::UserCreateInsert;
+use crate::entities::user::model::UserSeedData;
 
 pub struct Seeder {
   file_names: Vec<String>,
@@ -59,13 +59,14 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
                 new_seeder.table_names.push(first_part.to_string());
                 // println!("table_names aaa: {:?}", first_part);
 
-                let json_data = read_json_file();
+                let json_data = user_json_read_file();
 
                 match first_part {
-                  "users" => println!("users model"),
+                  "users" => println!("users model {:?}", json_data),
                   "posts" => println!("posts model"),
                   _ => println!("others model"),
                 }
+
                 for json_value in json_data {
                   if let Some(field_value) = json_value.get(first_part) {
                     // 여기서 [{},{},{}] 구조로 만들어짐
@@ -75,7 +76,6 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
                     for each in arr_field_value {
                       let mut field_names: Vec<&str> = Vec::new();
                       let mut field_values: Vec<String> = Vec::new();
-                      let mut field_user_values: Vec<UserCreateInsert> = Vec::new();
                       // println!("each json_data {:?}", each);
 
                       // {} 형태로 만들어짐
@@ -107,30 +107,15 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
 
                       // 개별적으로 값들을 바인딩
 
-                      // for (index, value) in field_values.iter().enumerate() {
-                      //   println!(
-                      //     "field_names[index] : {:?}",
-                      //     each.get(field_names[index])
-                      //   );
-                      //   if let Some(each_value) = each.get(field_names[index]) {
-                      //     query = query.bind(each_value)
-                      //     // println!("each_value", &each_value);
-                      //   }
-                      // }
-
-                      for (index, value) in field_values.iter().enumerate() {
-                        if let Some(json_value) = each.get(field_names[index]) {
-                          if let Some(bool_value) = json_value.as_bool() {
-                            query = query.bind(bool_value)
-                          } else {
-                            query = query.bind(value)
-                          }
-                        } else {
-                          query = query.bind(value)
-                        }
+                      for value in field_values {
+                        query = query.bind(value)
                       }
+
                       // 쿼리 실행
                       query.execute(pool).await.unwrap();
+
+                      // query_as는 주로 select 일때 사용하고, query는 주로 insert 구문
+                      // 실행할 때 사용한다.
                     }
                   }
                 }
@@ -160,12 +145,14 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
   seeder_folder
 }
 
-pub fn read_json_file() -> Vec<Value> {
+pub fn user_json_read_file() -> Vec<UserSeedData> {
   let dir_path = current_dir()
     .expect("Can't retreive directory")
     .join("src/seeders/task");
 
-  let mut json_values: Vec<Value> = Vec::new();
+  let mut user_data: Vec<UserSeedData> = Vec::new();
+  let mut post_data: Vec<UserSeedData> = Vec::new();
+  // let mut user_data: Vec<UserSeedData> = Vec::new();
 
   if let Ok(entries) = fs::read_dir(dir_path) {
     // 각 파일을 처리합니다.
@@ -177,29 +164,37 @@ pub fn read_json_file() -> Vec<Value> {
         if let Some(ext) = file_path.extension() {
           if ext == "json" {
             // 파일을 열어서 읽기 모드로 엽니다
+            if let Some(file_name) = file_path.file_name() {
+              println!("File Name: {:?}", file_name);
+            }
+
             let mut file = fs::File::open(&file_path).expect("파일을 열 수가 없습니다");
 
             // 파일 내용을 읽어서 String 으로 저장합니다.
-            let mut contents = String::new();
-            file
-              .read_to_string(&mut contents)
-              .expect("파일을 읽는데 문제가 발생했습니다");
+            // let mut contents = String::new();
+            // file
+            //   .read_to_string(&mut contents)
+            //   .expect("파일을 읽는데 문제가 발생했습니다");
 
+            let contents = include_str!("./task/users.json");
             // JSON 문자열(json_data)을 Data 구조체로 deserialize하는 작업을 해.
             // serde_json::from_str은 주어진 JSON 문자열을 Rust의 데이터 구조체로
             // 변환해줘.
-            let json_value: Value =
+
+            println!("contents: {:?}", contents);
+            let json_value: Vec<UserSeedData> =
               serde_json::from_str(&contents).expect("JSON 파싱에 실패했습니다");
 
             // println!("{:?} JSON 데이터: ", json_value);
-            json_values.push(json_value);
+            // user_data.push(json_value);
+            return json_value;
           }
         }
       }
     }
   }
 
-  json_values
+  user_data
 }
 
 fn extract_field_names(json: &Value, field_names: &mut Vec<String>) {
@@ -218,3 +213,38 @@ fn extract_field_names(json: &Value, field_names: &mut Vec<String>) {
     _ => {}
   }
 }
+
+// fn extract_field_values(json: &Value, field_values: &mut Vec<String>) {
+//   match json {
+//     Value::Object(map) => {
+//       for (key, value) in map {
+//         field_values.push(value.to_owned()); // 필드 이름을 벡터에 추가
+//         extract_field_values(value, field_values); // 중첩된 값이 있을 경우 재귀적으로
+//                                                    // 호출
+//       }
+//     }
+//     Value::Array(arr) => {
+//       for value in arr {
+//         extract_field_values(value, field_values);
+//       }
+//     }
+//     _ => {}
+//   }
+// }
+// fn extract_field_values(json: &Value, field_values: &mut Vec<String>) {
+//   match json {
+//     Value::Object(map) => {
+//       for (key, value) in map {
+//         field_values.push(value.to_owned()); // 필드 이름을 벡터에 추가
+//         extract_field_values(value, field_values); // 중첩된 값이 있을 경우 재귀적으로
+//                                                    // 호출
+//       }
+//     }
+//     Value::Array(arr) => {
+//       for value in arr {
+//         extract_field_values(value, field_values);
+//       }
+//     }
+//     _ => {}
+//   }
+// }
