@@ -1,5 +1,4 @@
 use std::env::current_dir;
-use std::error::Error;
 use std::fs::{self};
 use std::io::Read;
 use std::path::PathBuf;
@@ -8,6 +7,7 @@ use serde_json::{self, Map, Value};
 use sqlx::postgres::PgHasArrayType;
 use sqlx::types::{Type, Uuid};
 use sqlx::{Pool, Postgres};
+
 pub struct Seeder {
   file_names: Vec<String>,
   table_names: Vec<String>,
@@ -26,7 +26,7 @@ impl SeederFn for Seeder {
   }
 }
 
-pub async fn seeder(pool: &Pool<Postgres>) -> Result<(), Box<dyn Error>> {
+pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
   let mut new_seeder = Seeder::new();
   // current_dir()은 현재 작업하고 있는 곳의 폴더를 알려준다
   // api 폴더에서 src/main.rs를 실행하면 api 폴더가 프로그램이 실행되는 기준 디렉토리가
@@ -122,33 +122,25 @@ pub async fn seeder(pool: &Pool<Postgres>) -> Result<(), Box<dyn Error>> {
                               query = query.bind(bool_value);
                             }
                             Value::Number(int_value) => {
-                              if let Some(i64_value) = int_value.as_i64() {
-                                query = query.bind(i64_value);
-                              } else if let Some(f64_value) = int_value.as_f64() {
-                                query = query.bind(f64_value);
+                              if let Some(bool_value) = int_value.as_i64() {
+                                query = query.bind(bool_value);
                               } else {
-                                println!("Number Error")
+                                query = query.bind(value);
                               }
                             }
-
                             Value::String(uuid_string) => {
-                              println!("index {:?}", field_names[index]);
-
                               if let Ok(uuid) = Uuid::parse_str(uuid_string) {
                                 // UUID가 올바르게 파싱되었을 때 UUID 타입으로 바인딩
                                 query = query.bind(uuid);
                               } else {
+                                if field_names[index] == "thumbnail_src" {
+                                  let thumbnail_values = [uuid_string];
+                                  // let pg_array =
+                                  query = query.bind(thumbnail_values);
+                                }
                                 // 올바르지 않은 UUID 형식의 문자열 처리
                                 query = query.bind(uuid_string);
                               }
-                            }
-                            Value::Array(array_value) => {
-                              println!("array {:?}", field_names[index]);
-                              // let thumbnail_values: Vec<&str> =
-                              //   vec![array_value.as_str()];
-                              // println!("thumbnail_src : {:?}", thumbnail_values);
-                              // // let pg_array =
-                              query = query.bind(array_value);
                             }
                             Value::Object(obj_value) => {
                               println!("JSONB!!!!");
@@ -163,9 +155,22 @@ pub async fn seeder(pool: &Pool<Postgres>) -> Result<(), Box<dyn Error>> {
                             }
                           },
                           None => {
-                            println!("Seeder Error!")
+                            // Handle the case when each.get(field_names[index]) is None
                           }
                         }
+
+                        // if let Some(json_value) = each.get(field_names[index]) {
+                        //   if let Some(bool_value) = json_value.as_bool() {
+                        //     query = query.bind(bool_value)
+                        //   } else {
+                        //     if let Some(int_value) = json_value.as_i64() {
+                        //       query = query.bind(int_value)
+                        //     }
+                        //     query = query.bind(value)
+                        //   }
+                        // } else {
+                        //   // query = query.bind(value)
+                        // }
                       }
                       // 쿼리 실행
                       query.execute(pool).await.unwrap();
@@ -187,8 +192,15 @@ pub async fn seeder(pool: &Pool<Postgres>) -> Result<(), Box<dyn Error>> {
     new_seeder.file_names, new_seeder.table_names
   );
 
-  // seeder_folder
-  Ok(())
+  // serde_json::from_str()은 JSON 문자열을 파싱하여 해당하는 타입으로 디코딩하는
+  // 함수입니다. 그러나 여기서 file_name은 파일 이름을 나타내는 문자열이고, 이를 JSON
+  // 문자열로 파싱할 수 없습니다. 파일 내용을 읽어와 JSON으로 디코딩해야 합니다.
+  // for file_name in new_seeder.file_names {
+  //   let _ = read_json_file(&file_name);
+  // }
+
+  // for
+  seeder_folder
 }
 
 pub fn read_json_file() -> Vec<Value> {

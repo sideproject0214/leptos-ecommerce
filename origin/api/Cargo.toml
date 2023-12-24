@@ -18,6 +18,7 @@ sqlx = { version = "0.7.2", features = [
   "json",
   "postgres",
   "macros",
+  "uuid",
 ] }
 serde = "1.0.192"
 serde_json = "1.0.108"

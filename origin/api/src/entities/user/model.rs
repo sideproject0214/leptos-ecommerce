@@ -39,3 +39,12 @@ pub struct UserCreateInsert {
   pub password: String,
   pub is_admin: bool,
 }
+
+impl IntoIterator for UserCreateInsert {
+  type Item = (String, String, String, bool);
+  type IntoIter = std::vec::IntoIter<Self::Item>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    vec![(self.name, self.email, self.password, self.is_admin)].into_iter()
+  }
+}

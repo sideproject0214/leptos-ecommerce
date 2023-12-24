@@ -66,9 +66,8 @@
       "free_shipping": false,
       "delivery_fee": 2500
     },
-
     {
-      "user_id": "041c05af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea2ab",
       "title": "에어조던 23 시리즈",
       "image_src": "https://w3s.link/ipfs/bafybeicbjhyhmokbodeocaxfxahdl4gsxuqqkyeoqsvm46wzqmby7ehcba/footwear-1.png",
       "thumbnail_src": [
@@ -89,9 +88,8 @@
       "free_shipping": false,
       "delivery_fee": 3500
     },
-
     {
-      "user_id": "041c05af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea2ab",
       "title": "발렌시아 운동화",
       "image_src": "https://w3s.link/ipfs/bafybeicfvkf34c4rrckfo7h2aipkbgbcnm442bxuot5irbpwoqg7shokfu/footwear-2.png",
       "thumbnail_src": [
@@ -103,7 +101,6 @@
       "description": "수식어가 필요없는 명품 운동화",
       "brand": "발렌시아",
       "category": "운동화",
-
       "size": { "240": 3, "250": 10, "260": 10, "270": 1, "280": 3 },
       "price": 1200000,
       "count_in_stock": 27,
@@ -114,7 +111,7 @@
       "delivery_fee": 3500
     },
     {
-      "user_id": "041c05af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea2ab",
       "title": "여자 정장 일자바지 슬랙스",
       "image_src": "https://w3s.link/ipfs/bafybeidyottypwvecmqad4i7vk4gfvrkcghg7aoltr7yved2s2t6z5e2oi/woman-pants1.png",
       "thumbnail_src": [
@@ -136,7 +133,7 @@
       "delivery_fee": 4000
     },
     {
-      "user_id": "041c05af-90b5-49bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea3bb",
       "title": "[2]회사원셔츠 4종세트",
       "image_src": "https://w3s.link/ipfs/bafybeidi7o3o3wiosdqidzrwbiwrgpm3jjltbw22caztuq2xdgtectoj6i/man-shirts-1.jpg",
       "thumbnail_src": [
@@ -158,7 +155,7 @@
       "delivery_fee": 0
     },
     {
-      "user_id": "041c05af-90b5-49bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea3bb",
       "title": "[2]회사원셔츠 2종세트",
       "image_src": "https://w3s.link/ipfs/bafybeidujgajt4dby7ws6ii7mg5gkwwjddqoqyvsk4lwisufeupti4fg7i/man-shirts-2.png",
       "thumbnail_src": [
@@ -180,7 +177,7 @@
       "delivery_fee": 3500
     },
     {
-      "user_id": "041c05af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea3bb",
       "title": "[2]신입사원 정장세트",
       "image_src": "https://w3s.link/ipfs/bafybeif23dhzi5bdavydy4ts2te2goikrtiuys7but5nbwhtwxl5eevvyq/apparel-1.png",
       "thumbnail_src": [
@@ -203,7 +200,7 @@
     },
 
     {
-      "user_id": "041c05af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea3bb",
       "title": "[2]에어조던 23 시리즈",
       "image_src": "https://w3s.link/ipfs/bafybeicbjhyhmokbodeocaxfxahdl4gsxuqqkyeoqsvm46wzqmby7ehcba/footwear-1.png",
       "thumbnail_src": [
@@ -224,9 +221,8 @@
       "free_shipping": false,
       "delivery_fee": 3500
     },
-
     {
-      "user_id": "041c05af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0905ea3bb",
       "title": "[2]발렌시아 운동화",
       "image_src": "https://w3s.link/ipfs/bafybeicfvkf34c4rrckfo7h2aipkbgbcnm442bxuot5irbpwoqg7shokfu/footwear-2.png",
       "thumbnail_src": [
@@ -238,7 +234,6 @@
       "description": "수식어가 필요없는 명품 운동화",
       "brand": "발렌시아",
       "category": "운동화",
-
       "size": { "240": 3, "250": 10, "260": 10, "270": 1, "280": 3 },
       "price": 1200000,
       "count_in_stock": 27,
@@ -249,7 +244,7 @@
       "delivery_fee": 3500
     },
     {
-      "user_id": "042222af-90b5-45bb-b6b3-7c284e0428c6",
+      "user_id": "2f806f04-949b-4c28-a091-08a0805ea3ab",
       "title": "[2]여자 정장 일자바지 슬랙스",
       "image_src": "https://w3s.link/ipfs/bafybeidyottypwvecmqad4i7vk4gfvrkcghg7aoltr7yved2s2t6z5e2oi/woman-pants1.png",
       "thumbnail_src": [
