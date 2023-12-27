@@ -1,0 +1,74 @@
+{
+  "address": [
+    {
+      "recipient": "홍길동",
+      "shippingAddress": "서울특별시 관악구 신림동 대학로 123, 123동 1234호",
+      "postcode": "12345",
+      "address": "서울특별시 관악구 신림동 대학로 123",
+      "detail1": "123동 1234호",
+      "detail2": "싸플아파트",
+      "phone1": "010",
+      "phone2": "1234",
+      "phone3": "5678",
+      "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
+      "created_at": "2022-01-01T00:01:02Z",
+      "updated_at": "2022-01-02T00:01:02Z"
+    },
+    {
+      "recipient": "홍길순",
+      "shippingAddress": "서울특별시 관악구 신림동 대학로 123, 123동 1001호",
+      "postcode": "12345",
+      "address": "서울특별시 관악구 신림동 대학로 123",
+      "detail1": "123동 1001호",
+      "detail2": "싸플아파트",
+      "phone1": "010",
+      "phone2": "1234",
+      "phone3": "5678",
+      "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
+      "created_at": "2022-01-01T00:01:02Z",
+      "updated_at": "2022-01-02T00:01:02Z"
+    },
+    {
+      "recipient": "김철수",
+      "shippingAddress": "서울특별시 관악구 신림동 대학로 123, 117동 101호",
+      "postcode": "12345",
+      "address": "서울특별시 관악구 신림동 대학로 123",
+      "detail1": "117동 101호",
+      "detail2": "싸플아파트",
+      "phone1": "010",
+      "phone2": "1234",
+      "phone3": "5678",
+      "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
+      "created_at": "2022-01-03T00:01:02Z",
+      "updated_at": "2022-01-04T00:01:02Z"
+    },
+    {
+      "recipient": "박영희",
+      "shippingAddress": "서울특별시 관악구 신림동 대학로 123, 118동 1011호",
+      "postcode": "12345",
+      "address": "서울특별시 관악구 신림동 대학로 123",
+      "detail1": "118동 1011호",
+      "detail2": "싸플아파트",
+      "phone1": "010",
+      "phone2": "1234",
+      "phone3": "5678",
+      "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
+      "created_at": "2022-01-05T00:01:02Z",
+      "updated_at": "2022-01-06T00:01:02Z"
+    },
+    {
+      "recipient": "아이유",
+      "shippingAddress": "서울특별시 관악구 문화대로 123, 112동 1011호",
+      "postcode": "20154",
+      "address": "서울특별시 관악구 문화대로 123",
+      "detail1": "112동 1011호",
+      "detail2": "",
+      "phone1": "010",
+      "phone2": "1234",
+      "phone3": "5678",
+      "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
+      "created_at": "2022-01-07T00:01:02Z",
+      "updated_at": "2022-01-08T00:01:02Z"
+    }
+  ]
+}
