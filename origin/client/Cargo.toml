@@ -1,5 +1,5 @@
 [package]
-name = "leptos-ecommerce"
+name = "cl"
 version = "0.1.0"
 edition = "2021"
 
@@ -24,7 +24,6 @@ wasm-bindgen = "=0.2.89"
 thiserror = "1.0.38"
 tracing = { version = "0.1.37", optional = true }
 http = "0.2.8"
-serde = { version = "1.0.193", features = ["derive"] }
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -50,7 +49,7 @@ panic = "abort"
 
 [package.metadata.leptos]
 # The name used by wasm-bindgen/cargo-leptos for the JS/WASM bundle. Defaults to the crate name
-output-name = "leptos-ecommerce"
+output-name = "cl"
 
 # The site root folder is where cargo-leptos generate all output. WARNING: all content of this folder will be erased on a rebuild. Use it in your server setup.
 site-root = "target/site"
@@ -68,13 +67,10 @@ style-file = "style/main.scss"
 assets-dir = "public"
 
 # The IP and port (ex: 127.0.0.1:3000) where the server serves the content. Use it in your server setup.
-# 도커사용시에는 127.0.0.1 이 아닌 0.0.0.0 사용
-# site-addr = "127.0.0.1:4000"
-# 도커 사용시
-site-addr = "0.0.0.0:4000"
+site-addr = "127.0.0.1:3000"
 
 # The port to use for automatic reload monitoring
-reload-port = 4001
+reload-port = 3001
 
 # [Optional] Command to use when running end2end tests. It will run in the end2end dir.
 #   [Windows] for non-WSL use "npx.cmd playwright test"

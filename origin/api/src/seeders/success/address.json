@@ -11,8 +11,8 @@
       "phone2": "1234",
       "phone3": "5678",
       "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
-      "createdAt": "2021-01-01",
-      "updatedAt": "2021-01-01"
+      "created_at": "2022-01-01T00:01:02Z",
+      "updated_at": "2022-01-02T00:01:02Z"
     },
     {
       "recipient": "홍길순",
@@ -25,8 +25,8 @@
       "phone2": "1234",
       "phone3": "5678",
       "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
-      "createdAt": "2021-01-01",
-      "updatedAt": "2021-01-01"
+      "created_at": "2022-01-01T00:01:02Z",
+      "updated_at": "2022-01-02T00:01:02Z"
     },
     {
       "recipient": "김철수",
@@ -39,8 +39,8 @@
       "phone2": "1234",
       "phone3": "5678",
       "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
-      "createdAt": "2021-01-01",
-      "updatedAt": "2021-01-01"
+      "created_at": "2022-01-03T00:01:02Z",
+      "updated_at": "2022-01-04T00:01:02Z"
     },
     {
       "recipient": "박영희",
@@ -53,8 +53,8 @@
       "phone2": "1234",
       "phone3": "5678",
       "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
-      "createdAt": "2021-01-01",
-      "updatedAt": "2021-01-01"
+      "created_at": "2022-01-05T00:01:02Z",
+      "updated_at": "2022-01-06T00:01:02Z"
     },
     {
       "recipient": "아이유",
@@ -67,8 +67,8 @@
       "phone2": "1234",
       "phone3": "5678",
       "userId": "67ed3132-5504-4186-b871-8d65aa673bb5",
-      "createdAt": "2021-01-01",
-      "updatedAt": "2021-01-01"
+      "created_at": "2022-01-07T00:01:02Z",
+      "updated_at": "2022-01-08T00:01:02Z"
     }
   ]
 }

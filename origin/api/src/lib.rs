@@ -8,8 +8,7 @@ pub mod entities {
     pub mod model;
   }
 }
+pub mod config;
 pub mod seeders {
   pub mod sqlx_seeder;
 }
-
-pub mod config;

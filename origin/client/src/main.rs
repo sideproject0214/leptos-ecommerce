@@ -4,8 +4,8 @@ async fn main() {
     use axum::{routing::post, Router};
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
-    use leptos_ecommerce::app::{*};
-    use leptos_ecommerce::fileserv::file_and_error_handler;
+    use cl::app::*;
+    use cl::fileserv::file_and_error_handler;
 
     simple_logger::init_with_level(log::Level::Debug).expect("couldn't initialize logging");
 
@@ -21,9 +21,8 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-    .route("/api/*fn_name", post(leptos_axum::handle_server_fns))
-    
-    .leptos_routes(&leptos_options, routes, App)
+        .route("/api/*fn_name", post(leptos_axum::handle_server_fns))
+        .leptos_routes(&leptos_options, routes, App)
         .fallback(file_and_error_handler)
         .with_state(leptos_options);
 
@@ -42,8 +41,3 @@ pub fn main() {
     // unless we want this to work with e.g., Trunk for a purely client-side app
     // see lib.rs for hydration function instead
 }
-
-
-
-
-

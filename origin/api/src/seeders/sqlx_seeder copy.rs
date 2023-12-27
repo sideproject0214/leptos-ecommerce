@@ -1,19 +1,24 @@
 use std::env::current_dir;
+use std::error::Error;
 use std::fs::{self};
 use std::io::Read;
-use std::path::PathBuf;
 
 use serde_json::{self, Value};
+
 use sqlx::{Pool, Postgres};
 
-use crate::entities::post::model::PostData;
+use chrono::{DateTime, FixedOffset};
+use sqlx::types::chrono;
+use sqlx::types::Uuid;
 
-pub struct Seeder {
+use config::Config;
+
+struct Seeder {
   file_names: Vec<String>,
   table_names: Vec<String>,
 }
 
-pub trait SeederFn {
+trait SeederFn {
   fn new() -> Self;
 }
 
@@ -26,17 +31,101 @@ impl SeederFn for Seeder {
   }
 }
 
-pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
+// Implementation of types defined in external crates like DateTime and FixedOffset from chrono within the current code scope is not possible. This is one of the fundamental rules of Rust, requiring the definition of a new trait specific to these types. To achieve this, you need to enable the 'chrono' module in your Cargo.toml and then use the 'DateTime<FixedOffset>' time-related types. Afterwards, define and use a new type for 'DateTime<FixedOffset>' from chrono. Failing to do so will result in errors because the default DateTime<FixedOffset> lacks a trait for encoding as a timestamp.
+trait MyDateTimeEncode {
+  fn my_encode(&self) -> String;
+}
+
+impl MyDateTimeEncode for DateTime<FixedOffset> {
+  fn my_encode(&self) -> String {
+    self.to_rfc3339()
+  }
+}
+
+#[derive(Debug)]
+struct SeederConfig {
+  task_folder_path: String,
+  success_folder_path: String,
+  jsonb_name: String,
+  array_string_name: String,
+  created_at_name: String,
+  updated_at_name: String,
+}
+
+trait SeederConfigFn {
+  fn new() -> Self;
+}
+
+impl SeederConfigFn for SeederConfig {
+  fn new() -> Self {
+    SeederConfig {
+      task_folder_path: String::new(),
+      success_folder_path: String::new(),
+      jsonb_name: String::new(),
+      array_string_name: String::new(),
+      created_at_name: String::new(),
+      updated_at_name: String::new(),
+    }
+  }
+}
+
+fn read_config() -> Result<SeederConfig, config::ConfigError> {
+  let mut new_seeder_config = SeederConfig::new();
+  let settings = match Config::builder()
+    .add_source(config::File::with_name("pg-seeder"))
+    .build()
+  {
+    Ok(config) => config,
+    Err(err) => {
+      eprintln!("Error: Failed to load configuration: {}", err);
+      Config::default() // 또는 원하는 기본값을 리턴하는 함수 호출 등
+    }
+  };
+
+  match settings.get::<String>("seeders.task_folder") {
+    Ok(value) => new_seeder_config.task_folder_path = value,
+    Err(_) => new_seeder_config.task_folder_path = "src/seeders/task".to_string(),
+  };
+  match settings.get::<String>("seeders.success_folder") {
+    Ok(value) => new_seeder_config.success_folder_path = value,
+    Err(_) => new_seeder_config.success_folder_path = "src/seeders/success".to_string(),
+  };
+  match settings.get::<String>("seeders.created_at_name") {
+    Ok(value) => new_seeder_config.created_at_name = value,
+    Err(_) => new_seeder_config.created_at_name = "created_at".to_string(),
+  };
+  match settings.get::<String>("seeders.updated_at_name") {
+    Ok(value) => new_seeder_config.updated_at_name = value,
+    Err(_) => new_seeder_config.updated_at_name = "updated_at".to_string(),
+  };
+  match settings.get::<String>("seeders.jsonb_name") {
+    Ok(value) => new_seeder_config.jsonb_name = value,
+    Err(_) => new_seeder_config.jsonb_name = "size".to_string(),
+  };
+  match settings.get::<String>("seeders.array_string_name") {
+    Ok(value) => new_seeder_config.array_string_name = value,
+    Err(_) => new_seeder_config.array_string_name = "thumbnail_src".to_string(),
+  };
+
+  Ok(new_seeder_config)
+}
+
+#[warn(unused_variables)]
+pub async fn seeder(pool: &Pool<Postgres>) -> Result<(), Box<dyn Error>> {
+  let seed_config = read_config().unwrap();
+  println!("read config {:?}", seed_config.success_folder_path);
+
   let mut new_seeder = Seeder::new();
   // current_dir()은 현재 작업하고 있는 곳의 폴더를 알려준다
   // api 폴더에서 src/main.rs를 실행하면 api 폴더가 프로그램이 실행되는 기준 디렉토리가
   // 되고, current_dir()를 호출하면 해당 디렉토리인 api가 출력될 것입니다.
   let seeder_folder = current_dir()
-    .and_then(|a| Ok(a.join("src/seeders/task")))
+    .and_then(|a| Ok(a.join(seed_config.task_folder_path)))
     .expect("No seed_folder exists");
   // println!("seeder_folder : {:?}", seeder_folder);
+
   let success_folder = current_dir()
-    .and_then(|a| Ok(a.join("src/seeders/success")))
+    .and_then(|a| Ok(a.join(seed_config.success_folder_path)))
     .expect("No seed_folder exists");
 
   // fs::read_dir 함수는 지정된 디렉토리의 내용을 읽어들입니다. 이 함수는 디렉토리 내의
@@ -63,62 +152,162 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
 
                 for json_value in json_data {
                   if let Some(field_value) = json_value.get(first_part) {
-                    // println!("json_data [{}] {:?}", first_part, field_value)
-                    let arr_field_value = field_value.as_array().expect("No Array");
+                    // 여기서 [{},{},{}] 구조로 만들어짐
+                    let arr_field_value = field_value.as_array().unwrap();
 
+                    // 여기서 [{},{},{}] 구조로 만들어진 것을 하나씩 다시 돌린다
                     for each in arr_field_value {
+                      let mut field_names: Vec<&str> = Vec::new();
+                      let mut field_values: Vec<String> = Vec::new();
+
                       // println!("each json_data {:?}", each);
-                      let v = serde_json::to_value(&each).unwrap();
-                      // println!("field, value  {:?}", v);
-                      // println!("sqlx insert start!");
-                      // Deserialize하는 과정에서 JSON 데이터의 키와 값을 해당 Rust
-                      // 구조체의 필드와 매핑시켜 구조체로 변환하는 작업을 말해. 이를 통해
-                      // Rust 코드에서 쉽게 JSON 데이터를 조작하고 활용할 수 있게 돼.
 
-                      // query_as는 주로 select 일때 사용하고, query는 주로 insert 구문
-                      // 실행할 때 사용한다.
-                      let insert_result = sqlx::query(&format!(
-                        "insert into {} (uuid, user_id, title, image_src, \
-                         thumbnail_src, description, brand, category, size, price, \
-                         count_in_stock, rating, num_reviews, sale, free_shipping, \
-                         delivery_fee, created_at, updated_at) values ($1, $2, $3, $4, \
-                         $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, \
-                         $18)",
-                        first_part
-                      ))
-                      .bind(&each["uuid"])
-                      .bind(&each["user_id"])
-                      .bind(&each["title"])
-                      .bind(&each["image_src"])
-                      .bind(&each["thumbnail_src"])
-                      .bind(&each["description"])
-                      .bind(&each["brand"])
-                      .bind(&each["category"])
-                      .bind(&each["size"])
-                      .bind(&each["price"])
-                      .bind(&each["count_in_stock"])
-                      .bind(&each["rating"])
-                      .bind(&each["num_reviews"])
-                      .bind(&each["sale"])
-                      .bind(&each["free_shipping"])
-                      .bind(&each["delivery_fee"])
-                      .bind(&each["created_at"])
-                      .bind(&each["updated_at"])
-                      .execute(pool)
-                      .await;
-                      // .unwrap();
+                      // {} 형태로 만들어짐
 
-                      match insert_result {
-                        Ok(_) => println!("Insert successful"),
-                        Err(e) => eprintln!("Error inserting data: {}", e),
-                      };
+                      if let Some(json_obj) = each.as_object() {
+                        for (key, value) in json_obj {
+                          field_names.push(key);
+
+                          field_values.push(value.to_string());
+                        }
+                      }
+                      println!("Field Names: {:?}", &field_names);
+                      println!("Field Values: {:?}", &field_values);
+
+                      // 아래는 posts를 돌릴때 필요한 것이다. enumerate는 인덱스를
+                      // 만들어준다
+                      // let placeholders = (1..=field_values.len())
+                      //   .enumerate()
+                      //   .map(|(idx, n)| match field_names[idx] {
+                      //     "size" => format!("${}::JSONB", n),
+                      //     "thumbnail_src" => format!("${}::TEXT[]", n),
+                      //     _ => format!("${}", n),
+                      //   })
+                      //   .collect::<Vec<String>>()
+                      //   .join(", ");
+
+                      let mut placeholders = String::new();
+
+                      for (idx, n) in (1..=field_values.len()).enumerate() {
+                        let field_name = &field_names[idx];
+
+                        let placeholder = match field_name {
+                          _ if field_name == &seed_config.jsonb_name => {
+                            format!("${}::JSONB", n)
+                          }
+
+                          field if field == &seed_config.array_string_name => {
+                            format!("${}::TEXT[]", n)
+                          }
+                          _ => format!("${}", n),
+                        };
+
+                        placeholders.push_str(&placeholder);
+
+                        if idx < field_values.len() - 1 {
+                          placeholders.push_str(", ");
+                        }
+                      }
+
+                      let query = format!(
+                        "insert into {} ({}) values ({})",
+                        &first_part,
+                        &field_names.join(", "),
+                        placeholders
+                      );
+
+                      println!("postgres query : {:?}", &query);
+
+                      // 쿼리 실행
+                      let mut query = sqlx::query(&query);
+
+                      // 개별적으로 값들을 바인딩
+
+                      for (index, value) in field_values.iter().enumerate() {
+                        match each.get(field_names[index]) {
+                          Some(json_value) => match json_value {
+                            Value::Bool(bool_value) => {
+                              query = query.bind(bool_value);
+                            }
+                            Value::Number(int_value) => {
+                              if let Some(i64_value) = int_value.as_i64() {
+                                query = query.bind(i64_value);
+                              } else if let Some(f64_value) = int_value.as_f64() {
+                                query = query.bind(f64_value);
+                              } else {
+                                println!("Number Error")
+                              }
+                            }
+
+                            Value::String(uuid_string) => {
+                              println!("index {:?}", field_names[index]);
+                              match Uuid::parse_str(uuid_string) {
+                                Ok(uuid_value) => {
+                                  query = query.bind(uuid_value);
+                                }
+                                Err(_) => match field_names[index]
+                                  == seed_config.created_at_name
+                                  || field_names[index] == seed_config.updated_at_name
+                                {
+                                  true => {
+                                    if let Ok(timestamp) =
+                                      chrono::DateTime::parse_from_rfc3339(uuid_string)
+                                    {
+                                      query = query.bind(timestamp);
+                                      println!(
+                                        "string: created_at!!! true, filed_name : {:?}",
+                                        field_names[index]
+                                      )
+                                    }
+                                  }
+                                  false => {
+                                    query = query.bind(uuid_string);
+                                    println!(
+                                      "string: created_at!!! false, filed_name : {:?}",
+                                      field_names[index]
+                                    )
+                                  }
+                                },
+                              }
+                            }
+                            Value::Array(array_value) => {
+                              println!("array {:?}", field_names[index]);
+
+                              query = query.bind(array_value);
+                            }
+                            Value::Object(obj_value) => {
+                              println!("JSONB!!!! {:?}", field_names[index]);
+                              let json_string = serde_json::to_string(obj_value)
+                                .expect("Failed to serialize JSON object to string");
+
+                              // Bind the JSON string to the SQL query
+                              query = query.bind(json_string);
+                            }
+                            _ => {
+                              query = query.bind(value);
+                            }
+                          },
+                          None => {
+                            println!("Seeder Error!")
+                          }
+                        }
+                      }
+                      // 쿼리 실행
+                      query.execute(pool).await.unwrap();
                     }
                   }
                 }
               }
             }
           }
+          println!("✅ Seed completed for the {:?}.json", file_name);
         }
+
+        let new_path = success_folder.join(entry.file_name());
+        println!("success folder : {:?}", new_path);
+        if let Err(err) = fs::rename(entry.path(), new_path) {
+          println!("Failed to move file: {}", err);
+        };
       } else {
         println!("Failed to read the directory.");
       }
@@ -130,15 +319,9 @@ pub async fn seeder(pool: &Pool<Postgres>) -> PathBuf {
     new_seeder.file_names, new_seeder.table_names
   );
 
-  // serde_json::from_str()은 JSON 문자열을 파싱하여 해당하는 타입으로 디코딩하는
-  // 함수입니다. 그러나 여기서 file_name은 파일 이름을 나타내는 문자열이고, 이를 JSON
-  // 문자열로 파싱할 수 없습니다. 파일 내용을 읽어와 JSON으로 디코딩해야 합니다.
-  // for file_name in new_seeder.file_names {
-  //   let _ = read_json_file(&file_name);
-  // }
-
-  // for
-  seeder_folder
+  // seeder_folder
+  print!("✅ Seeder Work Success! ✅ \n");
+  Ok(())
 }
 
 pub fn read_json_file() -> Vec<Value> {

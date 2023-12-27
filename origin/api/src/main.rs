@@ -1,10 +1,9 @@
 use api::config::{EnvConfig, EnvValue};
 use api::entities::index::{get_db_conn, DbRepo};
-use api::entities::user::model::UserCreateInsert;
-use api::entities::user::repo::user_create;
 use api::seeders::sqlx_seeder::seeder;
 use axum::routing::get;
 use axum::Router;
+// use sqlx_pg_seeder::seeder;
 
 #[tokio::main]
 async fn main() {
