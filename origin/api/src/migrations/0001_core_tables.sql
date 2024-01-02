@@ -42,7 +42,7 @@ create table if not exists posts (
 );
 
 
-create table if not exists addresses (
+create table if not exists address (
     "id"  serial primary key,
     "user_id" uuid not null,
     "recipient" text not null,

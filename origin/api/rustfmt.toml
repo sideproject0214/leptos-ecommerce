@@ -1,47 +1,31 @@
-# # tab_spaces = 2
-# # max_width = 60
-# # single_line_if_else_max_width = 50
-# # hard_tabs = false
-# # newline_style = "Auto"
-
-# comment_width = 100
-# format_code_in_doc_comments = true
-# imports_granularity = "Crate"
-# imports_layout = "Vertical"
-# wrap_comments = true
-# hard_tabs = true
-# tab_spaces = 2
-# use_small_heuristics = "Max"
-
-# tab_spaces = 2
-# max_width = 60
-# single_line_if_else_max_width = 50
-# hard_tabs = false
-# newline_style = "Auto"
-
-# comment_width = 100
-# format_code_in_doc_comments = true
-# imports_granularity = "Crate"
-# imports_layout = "Vertical"
-# wrap_comments = true
-# hard_tabs = true
+comment_width = 100
+format_code_in_doc_comments = true
+imports_granularity = "Crate"
+imports_layout = "Vertical"
+wrap_comments = true
+hard_tabs = true
 tab_spaces = 2
-# use_small_heuristics = "Max"
-max_width = 90
-newline_style = "Unix"
+use_small_heuristics = "Max"
+
+
+max_width = 60
+single_line_if_else_max_width = 50
+
+newline_style = "Auto"
+
+
 use_field_init_shorthand = true
 use_try_shorthand = true
 
-# Unstable features below
+
 unstable_features = true
-# version = "Two"
-comment_width = 100
+
+
 error_on_line_overflow = true
-format_code_in_doc_comments = true
+
 format_macro_bodies = true
 format_macro_matchers = true
 format_strings = true
-imports_granularity = "Module"
+
 group_imports = "StdExternalCrate"
 normalize_doc_attributes = true
-wrap_comments = true

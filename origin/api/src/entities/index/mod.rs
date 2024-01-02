@@ -1,12 +1,14 @@
-use sqlx::{migrate, FromRow, Pool, Postgres};
-use uuid::Uuid;
-
 use crate::config::EnvValue;
-
+use sqlx::{
+	migrate, postgres::PgPoolOptions, prelude::FromRow, Pool,
+	Postgres,
+};
+use std::time::Duration;
+use uuid::Uuid;
 /// 모든 User, Post 테이블의 고유 식별 값
 #[derive(FromRow)]
 pub struct EntityUuid {
-  pub uuid: Uuid,
+	pub uuid: Uuid,
 }
 
 /// 이 구조체가 Postgres 데이터베이스 연결 풀을 나타낸다
@@ -26,7 +28,7 @@ pub struct EntityUuid {
 /// 사용할 수 있게 한다.)
 #[derive(Clone)]
 pub struct DbRepo {
-  my_pool: Pool<Postgres>,
+	my_pool: Pool<Postgres>,
 }
 
 // 여기서 type Output;은 type Output은 트레이트 내에
@@ -55,58 +57,59 @@ pub struct DbRepo {
 // 작업에서는 관례적으로 결과도출물에 Output 이라는 이름의 연관타입을
 // 주로 사용한다
 pub trait DbPoolGetter {
-  type Output;
-  fn get_pool(&self) -> &Self::Output;
+	type Output;
+	fn get_pool(&self) -> &Self::Output;
 }
 
 /// DbRepo 라는 구조체 메서드
 impl DbRepo {
-  pub async fn init(my_env: &EnvValue) -> Self {
-    // println!("DbRepo Init!!! {:?}", my_env);
-    Self {
-      my_pool: get_db_conn(&my_env).await,
-    }
-  }
+	pub async fn init(my_env: &EnvValue) -> Self {
+		// println!("DbRepo Init!!! {:?}", my_env);
+		Self { my_pool: get_db_conn(&my_env).await }
+	}
 }
 
 /// DbPoolGetter 트레이트 구현
 /// 일반적으로 트레이트 구현은 impl TraitName for Type 으로 만든다
 impl DbPoolGetter for DbRepo {
-  type Output = Pool<Postgres>;
+	type Output = Pool<Postgres>;
 
-  fn get_pool(&self) -> &Self::Output {
-    &self.my_pool
-  }
+	fn get_pool(&self) -> &Self::Output {
+		&self.my_pool
+	}
 }
 
-/// Impl로 구조체(struct)에 메서드 추가한다
-/// 메서드는 객체와 짝지어진 함수로 인자를 지정할 필요가 없는 함수
-/// 여기서 관용적인 new를 사용하지 않는 이유는 이 함수는 비동기이어야
-/// 하기 때문이다 관용적인 new 사용 : impl DbRepo { fn **new()** -> T
-/// }
+pub async fn get_db_conn(
+	my_env: &EnvValue,
+) -> Pool<Postgres> {
+	println!("Get DB Connect Start!");
+	let pg_dialect = &my_env.db_dialect;
+	let pg_username = &my_env.db_username;
+	let pg_password = &my_env.db_password;
+	let pg_host = &my_env.db_host;
+	let pg_port = &my_env.db_port;
+	let pg_database = &my_env.db_database;
 
-pub async fn get_db_conn(my_env: &EnvValue) -> Pool<Postgres> {
-  println!("Get DB Connect Start!");
-  let pg_dialect = &my_env.db_dialect;
-  let pg_username = &my_env.db_username;
-  let pg_password = &my_env.db_password;
-  let pg_host = &my_env.db_host;
-  let pg_port = &my_env.db_port;
-  let pg_database = &my_env.db_database;
-
-  let pg_url = format!(
+	let db_connection_str = format!(
     "{pg_dialect}://{pg_username}:{pg_password}@{pg_host}:{pg_port}/{pg_database}"
   );
-  println!("DB URL : {:?}", &pg_url);
-  let my_pool = sqlx::postgres::PgPool::connect(&pg_url).await.unwrap();
 
-  let migrate = migrate!("./src/migrations").run(&my_pool).await;
+	println!("DB URL : {:?}", &db_connection_str);
 
-  match migrate {
-    Ok(()) => println!("sqlx migration success"),
-    Err(e) => println!("sqlx migration error : {:?}", e),
-  }
+	let pool = PgPoolOptions::new()
+		.max_connections(5)
+		.acquire_timeout(Duration::from_secs(3))
+		.connect(&db_connection_str)
+		.await
+		.expect("Can't connect to database");
 
-  my_pool
-  // env_extact()
+	let migrate =
+		migrate!("./src/migrations").run(&pool).await;
+
+	match migrate {
+		Ok(()) => println!("sqlx migration success"),
+		Err(e) => println!("sqlx migration error : {:?}", e),
+	}
+
+	pool
 }

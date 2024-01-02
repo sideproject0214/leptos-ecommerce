@@ -8,10 +8,9 @@ use serde_json::{self, Value};
 use sqlx::{Pool, Postgres};
 
 use chrono::{DateTime, FixedOffset};
+use config::Config;
 use sqlx::types::chrono;
 use sqlx::types::Uuid;
-
-use config::Config;
 
 struct Seeder {
   file_names: Vec<String>,
