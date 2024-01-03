@@ -1,6 +1,5 @@
 pub mod entities {
 
-	pub mod index;
 	pub mod user {
 		pub mod model;
 		pub mod repo;
@@ -11,22 +10,16 @@ pub mod entities {
 		pub mod routes;
 	}
 }
-pub mod config;
+
 pub mod seeders {
 	pub mod sqlx_seeder;
 }
 
+use crate::entities::post::routes::post_routes;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-
-use sqlx::{Pool, Postgres};
+use dotenv::dotenv;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use sqlx_pg_seeder::seeder;
-
-use crate::{
-	config::{EnvConfig, EnvValue},
-	entities::{
-		index::get_db_conn, post::routes::post_routes,
-	},
-};
 
 #[allow(unused)]
 pub async fn get_root() -> &'static str {
@@ -38,27 +31,48 @@ pub struct AppState {
 }
 
 pub async fn run() -> std::io::Result<()> {
-	let mut my_env_value = EnvValue::new();
-	my_env_value.load_config();
+	if std::env::var_os("RUST_LOG").is_none() {
+		std::env::set_var("RUST_LOG", "actix_web=info");
+	}
 
-	// let db_repo = DbRepo::init(&my_env_value).await;
+	dotenv().ok();
 
-	let pool = get_db_conn(&my_env_value).await;
+	let database_url = std::env::var("DATABASE_URL")
+		.expect("DATABASE_URL must be set");
+
+	let api_address = std::env::var("API_ADDRESS")
+		.expect("API_ADDRESS must be set");
+
+	let pool = match PgPoolOptions::new()
+		.max_connections(10)
+		.connect(&database_url)
+		.await
+	{
+		Ok(pool) => {
+			println!(
+				"✅Connection to the database is successful!"
+			);
+			pool
+		}
+		Err(err) => {
+			println!(
+				"🔥 Failed to connect to the database: {:?}",
+				err
+			);
+			std::process::exit(1);
+		}
+	};
+
 	let _seeder = seeder(&pool).await;
 
 	println!(
 		"🚀 Actix server is running at http://{:?}",
-		&my_env_value.api_address
+		api_address
 	);
 
 	env_logger::init_from_env(
 		env_logger::Env::new().default_filter_or("debug"),
 	);
-
-	// if std::env::var_os("RUST_LOG").is_none() {
-	// 	std::env::set_var("RUST_LOG", "actix_web=info");
-	// }
-	// env_logger::init();
 
 	let result = HttpServer::new(move || {
 		App::new()
@@ -71,7 +85,7 @@ pub async fn run() -> std::io::Result<()> {
 				web::scope("/api/post").service(post_routes()),
 			)
 	})
-	.bind(&my_env_value.api_address)?
+	.bind(api_address)?
 	.run()
 	.await;
 

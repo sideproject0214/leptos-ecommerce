@@ -15,7 +15,6 @@ create table if not exists users (
     "pw_email_address" varchar(100),
     "created_at" timestamp not null default now(),
     "updated_at" timestamp not null default now()
-
 );
 
 create table if not exists posts (

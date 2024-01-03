@@ -32,3 +32,21 @@
 
 ### [api] cors
 <https://medium.com/intelliconnect-engineering/using-axum-framework-to-create-rest-api-part-1-7d434d2c5de4>
+
+### [sqlx]
+#### 1. sqlx-cli
+  ```bash
+  cargo install sqlx-cli
+  ```
+#### 2.1 sqxl-cli 명령어
+- sql 파일 만들기
+  ```bash
+  sqlx migrate add -r 만들이름
+  ```
+  - 여기서 -r를 붙여줘야 up, down 파일이 만들어진다   
+- migration 실행하기
+  ```bash
+  sqlx migrate run --source "./src/migrations"
+  ```
+  - --source 옵션을 사용해서 폴더를 지정할 수 있다
+  - 기존에 마이그레이션 파일은 제외하고 새로 추가된 파일만 마이그레이션을 진행한다.
