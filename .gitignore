@@ -15,3 +15,5 @@ end2end/playwright-report/
 playwright/.cache/
 *.copy.*
 deprecated
+0001_core_tables.sql
+0001_core_tables_depre.sql
