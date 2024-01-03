@@ -16,7 +16,10 @@ pub mod seeders {
 }
 
 use crate::entities::post::routes::post_routes;
-use actix_web::{middleware::Logger, web, App, HttpServer};
+use actix_web::{
+	guard, middleware::Logger, web, App, HttpResponse,
+	HttpServer,
+};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use sqlx_pg_seeder::seeder;
@@ -50,7 +53,7 @@ pub async fn run() -> std::io::Result<()> {
 	{
 		Ok(pool) => {
 			println!(
-				"✅Connection to the database is successful!"
+				"✅ Connection to the database is successful!"
 			);
 			pool
 		}
@@ -83,6 +86,11 @@ pub async fn run() -> std::io::Result<()> {
 			.route("/api", web::get().to(get_root))
 			.service(
 				web::scope("/api/post").service(post_routes()),
+			)
+			.default_service(
+				web::route()
+					.guard(guard::Not(guard::Get()))
+					.to(HttpResponse::MethodNotAllowed),
 			)
 	})
 	.bind(api_address)?

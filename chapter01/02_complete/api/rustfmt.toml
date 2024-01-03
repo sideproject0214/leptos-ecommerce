@@ -1,0 +1,31 @@
+comment_width = 100
+format_code_in_doc_comments = true
+imports_granularity = "Crate"
+imports_layout = "Vertical"
+wrap_comments = true
+hard_tabs = true
+tab_spaces = 2
+use_small_heuristics = "Max"
+
+
+max_width = 60
+single_line_if_else_max_width = 50
+
+newline_style = "Auto"
+
+
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+
+unstable_features = true
+
+
+error_on_line_overflow = true
+
+format_macro_bodies = true
+format_macro_matchers = true
+format_strings = true
+
+group_imports = "StdExternalCrate"
+normalize_doc_attributes = true
