@@ -1,10 +1,9 @@
-use actix_web::{
-	delete, get, patch, post, web, HttpResponse, Responder,
-};
-use chrono::prelude::*;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use sqlx::{PgPool, Pool, Postgres};
+use actix_web::{get, web, HttpResponse};
+
+use serde::Deserialize;
+
+use crate::entities::post::model::Post;
+use crate::AppState;
 
 #[derive(Deserialize, Debug)]
 pub struct FilterOptions {
@@ -21,13 +20,14 @@ pub struct ParamOption {
 #[get("/{pagination}")]
 pub async fn get_posts_pagination(
 	page: web::Path<ParamOption>,
-	// conn: web::Data<PgPool>,
+	data: web::Data<AppState>,
 ) -> HttpResponse {
 	println!("pagination: {:?}", page.pagination);
-	let query = format!("select * from users");
+	let query_result =
+		sqlx::query_as!(Post, "select * from posts")
+			.fetch_all(&data.db)
+			.await;
 	// let result = sqlx::query(&query).fetch_all(&**conn).await;
 
 	HttpResponse::Ok().body("show users 22")
 }
-
-// 강의 예제 따라하기

@@ -1,5 +1,5 @@
 pub mod entities {
-	pub mod app_state;
+
 	pub mod index;
 	pub mod user {
 		pub mod model;
@@ -18,14 +18,13 @@ pub mod seeders {
 
 use actix_web::{middleware::Logger, web, App, HttpServer};
 
+use sqlx::{PgPool, Pool, Postgres};
 use sqlx_pg_seeder::seeder;
 
 use crate::{
 	config::{EnvConfig, EnvValue},
 	entities::{
-		app_state::AppState,
-		index::{get_db_conn, DbRepo},
-		post::routes::post_routes,
+		index::get_db_conn, post::routes::post_routes,
 	},
 };
 
@@ -34,15 +33,15 @@ pub async fn get_root() -> &'static str {
 	"Hello World!!!"
 }
 
+pub struct AppState {
+	pub db: Pool<Postgres>,
+}
+
 pub async fn run() -> std::io::Result<()> {
 	let mut my_env_value = EnvValue::new();
 	my_env_value.load_config();
 
-	let db_repo = DbRepo::init(&my_env_value).await;
-	let app_data = web::Data::new(AppState {
-		client: reqwest::Client::new(),
-		db_repo,
-	});
+	// let db_repo = DbRepo::init(&my_env_value).await;
 
 	let pool = get_db_conn(&my_env_value).await;
 	let _seeder = seeder(&pool).await;
@@ -59,7 +58,7 @@ pub async fn run() -> std::io::Result<()> {
 	let result = HttpServer::new(move || {
 		App::new()
 			.wrap(Logger::default())
-			.app_data(app_data.clone())
+			.app_data(AppState { db: pool.clone() })
 			.route("/api", web::get().to(get_root))
 			.service(
 				web::scope("/api/post").service(post_routes()),
