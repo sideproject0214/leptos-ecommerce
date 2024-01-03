@@ -1,9 +1,9 @@
-use actix_web::{get, web, HttpResponse};
-
-use serde::Deserialize;
+use actix_web::{get, web, HttpResponse, Responder};
 
 use crate::entities::post::model::Post;
 use crate::AppState;
+use serde::Deserialize;
+use serde_json::json;
 
 #[derive(Deserialize, Debug)]
 pub struct FilterOptions {
@@ -21,13 +21,24 @@ pub struct ParamOption {
 pub async fn get_posts_pagination(
 	page: web::Path<ParamOption>,
 	data: web::Data<AppState>,
-) -> HttpResponse {
+) -> impl Responder {
 	println!("pagination: {:?}", page.pagination);
 	let query_result =
 		sqlx::query_as!(Post, "select * from posts")
 			.fetch_all(&data.db)
 			.await;
-	// let result = sqlx::query(&query).fetch_all(&**conn).await;
 
-	HttpResponse::Ok().body("show users 22")
+	if query_result.is_err() {
+		let message = "Something bad happened while fetching all note items";
+		return HttpResponse::InternalServerError()
+			.json(json!({"status": "error","message": message}));
+	}
+	let notes = query_result.unwrap();
+
+	let json_response = serde_json::json!({
+			"status": "success",
+			"results": notes.len(),
+			"notes": notes
+	});
+	HttpResponse::Ok().json(json_response)
 }

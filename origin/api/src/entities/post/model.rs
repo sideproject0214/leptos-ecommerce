@@ -11,8 +11,8 @@ pub struct Post {
 	pub uuid: Uuid,
 	pub title: String,
 	pub description: String,
-	pub created_at: Option<chrono::DateTime<chrono::Utc>>,
-	pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
+	pub created_at: Option<DateTime<Utc>>,
+	pub updated_at: Option<DateTime<Utc>>,
 }
 
 // try2

@@ -18,7 +18,7 @@ pub mod seeders {
 
 use actix_web::{middleware::Logger, web, App, HttpServer};
 
-use sqlx::{PgPool, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use sqlx_pg_seeder::seeder;
 
 use crate::{
@@ -52,13 +52,20 @@ pub async fn run() -> std::io::Result<()> {
 	);
 
 	env_logger::init_from_env(
-		env_logger::Env::new().default_filter_or("info"),
+		env_logger::Env::new().default_filter_or("debug"),
 	);
+
+	// if std::env::var_os("RUST_LOG").is_none() {
+	// 	std::env::set_var("RUST_LOG", "actix_web=info");
+	// }
+	// env_logger::init();
 
 	let result = HttpServer::new(move || {
 		App::new()
 			.wrap(Logger::default())
-			.app_data(AppState { db: pool.clone() })
+			.app_data(web::Data::new(AppState {
+				db: pool.clone(),
+			}))
 			.route("/api", web::get().to(get_root))
 			.service(
 				web::scope("/api/post").service(post_routes()),
